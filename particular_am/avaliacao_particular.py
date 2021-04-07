@@ -4,7 +4,8 @@ from base_am.resultado import Fold, Resultado
 from particular_am.metodo_particular import MetodoClassificacao
 import optuna
 from sklearn.svm import LinearSVC
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
 
 class OtimizacaoObjetivoRandomForest(OtimizacaoObjetivo):
     def __init__(self, fold:Fold, col_classe:str):
@@ -33,6 +34,20 @@ class OtimizacaoObjetivoSVM(OtimizacaoObjetivo):
         exp_cost = trial.suggest_uniform('exp_cost', 0, 3) 
 
         scikit_method = LinearSVC(C=2**exp_cost, random_state=2, class_weight='balanced')
+
+        return MetodoClassificacao(scikit_method, self.col_classe)
+
+    def resultado_metrica_otimizacao(self,resultado: Resultado) -> float:
+        return resultado.macro_f1
+
+class OtimizacaoObjetivoMLP(OtimizacaoObjetivo):
+    def __init__(self, fold:Fold, col_classe:str):
+        super().__init__(fold, col_classe)
+
+    def obtem_metodo(self,trial: optuna.Trial)->MetodoAprendizadoDeMaquina:
+        n_first_layer = trial.suggest_int('n_first_layer', 1, 20) 
+
+        scikit_method = MLPClassifier(random_state=2, solver='lbfgs', activation='logistic', hidden_layer_sizes=(n_first_layer,), learning_rate_init=.1, max_iter=200)
 
         return MetodoClassificacao(scikit_method, self.col_classe)
 

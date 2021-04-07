@@ -7,32 +7,19 @@ from base_am.avaliacao import Experimento
 from sklearn.svm import LinearSVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
+from sklearn.neural_network import MLPClassifier
 
 from particular_am.metodo_particular import MetodoClassificacao
-from particular_am.preprocessamento_atributos_particular import preprocessar_dataframe
-from particular_am.avaliacao_particular import OtimizacaoObjetivoRandomForest, OtimizacaoObjetivoSVM
+from particular_am.avaliacao_particular import OtimizacaoObjetivoRandomForest, OtimizacaoObjetivoSVM, OtimizacaoObjetivoMLP
 
+from datasets.helper import load_and_preprocess_dataset
 
 # ============ LEITURA E FORMATACAO DO DATASET
-# twitter_dataset = pickle.load(open('datasets/SS-Twitter/raw.pickle', 'rb'))
-# youtube_dataset = pickle.load(open('datasets/SS-Youtube/raw.pickle', 'rb'))
-# olympic_dataset = pickle.load(open('datasets/Olympic/raw.pickle', 'rb'))
-kaggle_dataset = pickle.load(open('datasets/kaggle-insults/raw.pickle', 'rb'))
-df_kaggle = {
-    'text': kaggle_dataset['texts'],
-    'label': [entry['label'] for entry in kaggle_dataset['info']]
-}
-df_kaggle = pd.DataFrame(df_kaggle)
-col_classe = 'label'
-
-# preprocessamento do dataset a ser utilizado
-df_kaggle = preprocessar_dataframe(df_kaggle)
+dataframe, _, col_classe = load_and_preprocess_dataset()
 
 
 # ============ CONSTRUÇÃO DE FOLDS
-df_treino = df_kaggle.sample(frac=.7, random_state=2)
-df_teste = df_kaggle.drop(df_treino.index)
-arr_folds = Fold.gerar_k_folds(df_kaggle, val_k=2, col_classe=col_classe, num_repeticoes=1, num_folds_validacao=2, num_repeticoes_validacao=1)
+arr_folds = Fold.gerar_k_folds(dataframe, val_k=2, col_classe=col_classe, num_repeticoes=1, num_folds_validacao=2, num_repeticoes_validacao=1)
 
 
 # ============ CONSTRUÇÃO DOS MÉTODOS
@@ -44,6 +31,9 @@ ml_svm_method = MetodoClassificacao(scikit_svm_method, col_classe)
 
 scikit_gaussianNB = GaussianNB()
 ml_gaussianNB_method = MetodoClassificacao(scikit_gaussianNB, col_classe)
+
+scikit_mlp = MLPClassifier(random_state=2, solver='lbfgs', activation='logistic', hidden_layer_sizes=(10,), learning_rate_init=.1, max_iter=200)
+ml_mlp_method = MetodoClassificacao(scikit_mlp, col_classe)
 
 
 # ============ OTIMIZAÇÃO DE PARÂMETROS
@@ -57,11 +47,18 @@ experimento_svm = Experimento([arr_folds[0]], ml_method=ml_svm_method,
 
 experimento_gaussianNB = Experimento([arr_folds[0]], ml_method=ml_gaussianNB_method, num_trials=1)
 
+experimento_mlp = Experimento([arr_folds[0]], ml_method=ml_mlp_method,
+                    ClasseObjetivoOtimizacao=OtimizacaoObjetivoMLP,
+                    num_trials=5)
+
+
 macro_f1_rndforest = experimento_rndforest.macro_f1_avg
 macro_f1_svm = experimento_svm.macro_f1_avg
 macro_f1_gaussianNB = experimento_gaussianNB.macro_f1_avg
+macro_f1_mlp = experimento_mlp.macro_f1_avg
 
 print()
 print(f'Melhor Macro F1 RandomForest: {macro_f1_rndforest}')
 print(f'Melhor Macro F1 SVM: {macro_f1_svm}')
 print(f'Melhor Macro F1 GaussianNaiveBayes: {macro_f1_gaussianNB}')
+print(f'Melhor Macro F1 Multi-Layer Perceptron: {macro_f1_mlp}')

@@ -18,7 +18,7 @@ dataframe, _, col_classe = load_and_preprocess_dataset()
 
 
 # ============ CONSTRUÇÃO DE FOLDS
-arr_folds = Fold.gerar_k_folds(dataframe, val_k=5, col_classe=col_classe, num_repeticoes=2, num_folds_validacao=4, num_repeticoes_validacao=2)
+arr_folds = Fold.gerar_k_folds(dataframe, val_k=5, col_classe=col_classe, num_repeticoes=1, num_folds_validacao=2, num_repeticoes_validacao=1)
 
 
 # ============ CONSTRUÇÃO DOS MÉTODOS
@@ -27,7 +27,7 @@ ml_mlp_method = MetodoClassificacao(scikit_mlp_method, col_classe)
 
 
 # ============ OTIMIZAÇÃO DE PARÂMETROS
-experimento_mlp = Experimento([arr_folds[0]], ml_method=ml_mlp_method,
+experimento_mlp = Experimento(arr_folds, ml_method=ml_mlp_method,
                     ClasseObjetivoOtimizacao=OtimizacaoObjetivoMLP,
                     num_trials=20)
 

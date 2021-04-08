@@ -18,7 +18,7 @@ df_treino, df_teste, col_classe = load_and_preprocess_dataset()
 
 
 # ============ AVALIAÇÃO DO TESTE
-best_n_first_layer = 10
+best_n_first_layer = 9
 scikit_mlp_method = MLPClassifier(random_state=2, solver='lbfgs', activation='logistic', hidden_layer_sizes=(best_n_first_layer,), learning_rate_init=.1, max_iter=200)
 ml_mlp_method = MetodoClassificacao(scikit_mlp_method, col_classe)
 result = ml_mlp_method.eval(df_treino=df_treino, df_data_to_predict=df_teste, col_classe=col_classe)
